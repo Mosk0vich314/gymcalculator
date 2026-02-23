@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Gym Calc</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF3B30%22/><path d=%22M15,45 h5 v10 h-5 z M22,40 h8 v20 h-8 z M32,48 h36 v4 h-36 z M70,40 h8 v20 h-8 z M80,45 h5 v10 h-5 z%22 fill=%22white%22/></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><rect width=%22100%22 height=%22100%22 rx=%2220%22 fill=%22%23FF3B30%22/><path d=%22M15,45 h5 v10 h-5 z M22,40 h8 v20 h-8 z M32,48 h36 v4 h-36 z M70,40 h8 v20 h-8 z M80,45 h5 v10 h-5 z%22 fill=%22white%22/></svg>">	
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1E1E1E;
+            --primary: #FF3B30;
+            --text-main: #FFFFFF;
+            --text-muted: #A0A0A0;
+            --border: #333333;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 20px;
+            text-align: center;
+            color: var(--primary);
+        }
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 20px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            margin-bottom: 20px;
+        }
+        .input-group {
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        label {
+            font-size: 16px;
+            font-weight: 500;
+        }
+        input {
+            width: 100px;
+            background-color: #2C2C2C;
+            border: 1px solid var(--border);
+            color: white;
+            font-size: 18px;
+            padding: 10px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .divider {
+            height: 1px;
+            background-color: var(--border);
+            margin: 20px 0;
+        }
+        .result-group {
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .result-label {
+            color: var(--text-muted);
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .result-value {
+            font-size: 42px;
+            font-weight: bold;
+            color: var(--primary);
+            margin-top: 5px;
+        }
+        .small-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>e1RM Calculator</h1>
+
+    <div class="card">
+        <div class="input-group">
+            <label for="weight">Weight (kg/lbs)</label>
+            <input type="number" id="weight" placeholder="e.g. 180" inputmode="decimal">
+        </div>
+        <div class="input-group">
+            <label for="reps">Reps</label>
+            <input type="number" id="reps" placeholder="e.g. 1" inputmode="numeric">
+        </div>
+        <div class="input-group">
+            <label for="rpe">RPE</label>
+            <input type="number" id="rpe" placeholder="e.g. 8" step="0.5" inputmode="decimal">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="result-group">
+            <div class="result-label">Estimated 1RM</div>
+            <div class="result-value" id="e1rm-result">0</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="input-group">
+            <label for="percentage">Back-off Target %</label>
+            <input type="number" id="percentage" placeholder="e.g. 80" inputmode="decimal">
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="result-group">
+            <div class="result-label">Back-off Weight</div>
+            <div class="result-value" id="backoff-result">0</div>
+        </div>
+    </div>
+
+    <div class="small-text">Weights are automatically rounded to the nearest 2.5 increments.</div>
+
+    <script>
+        // Get input elements
+        const weightInput = document.getElementById('weight');
+        const repsInput = document.getElementById('reps');
+        const rpeInput = document.getElementById('rpe');
+        const percentageInput = document.getElementById('percentage');
+        
+        // Get result elements
+        const e1rmResult = document.getElementById('e1rm-result');
+        const backoffResult = document.getElementById('backoff-result');
+
+        // Listen for changes on all inputs
+        [weightInput, repsInput, rpeInput, percentageInput].forEach(input => {
+            input.addEventListener('input', calculateResults);
+        });
+
+        function calculateResults() {
+            const weight = parseFloat(weightInput.value);
+            const reps = parseFloat(repsInput.value);
+            const rpe = parseFloat(rpeInput.value);
+            const percentage = parseFloat(percentageInput.value);
+
+            let e1rm = 0;
+
+            // 1. Calculate e1RM
+            if (weight > 0 && reps > 0 && rpe > 0) {
+                // Modified Epley Formula for RPE
+                e1rm = weight * (1 + (reps + (10 - rpe)) / 30);
+                e1rmResult.textContent = e1rm.toFixed(1); // Show 1 decimal place
+            } else {
+                e1rmResult.textContent = "0";
+            }
+
+            // 2. Calculate Back-off Weight
+            if (e1rm > 0 && percentage > 0) {
+                // Calculate exact weight
+                const exactBackoff = e1rm * (percentage / 100);
+                
+                // Round to nearest 2.5 (standard plates)
+                const roundedBackoff = Math.round(exactBackoff / 2.5) * 2.5;
+                
+                backoffResult.textContent = roundedBackoff.toFixed(1);
+            } else {
+                backoffResult.textContent = "0";
+            }
+        }
+    </script>
+</body>
+</html>
